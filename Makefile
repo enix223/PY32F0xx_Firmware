@@ -5,7 +5,7 @@ toolchain:
 	curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
 	echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/ubuntu/$(shell lsb_release -rs)/prod noble main" | sudo tee /etc/apt/sources.list.d/microsoft-prod.list
 	sudo apt update
-	sudo apt install gcc-arm-none-eabi dotnet-runtime-8.0 gdb-multiarch
+	sudo apt install -y gcc-arm-none-eabi dotnet-runtime-8.0 gdb-multiarch
 
 # 设置python环境
 pythonenv:
