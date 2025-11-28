@@ -31,11 +31,20 @@
 /* Includes ------------------------------------------------------------------*/
 #include <string.h>
 #include "main.h"
+#include "py32f003xx_ll_Start_Kit.h"
 #include "chacha20.h"
 
+/* Private define ------------------------------------------------------------*/
+#define LED_GPIO_PIN          LED3_PIN
+#define LED_GPIO_PORT         LED3_GPIO_PORT
+#define LED_GPIO_CLK_ENABLE() LED3_GPIO_CLK_ENABLE()
+
+/* Private variables ---------------------------------------------------------*/
 /* Private user code ---------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
+static void APP_SystemClockConfig(void);
+static void APP_GpioConfig(void);
 static int TestEncryptDecrypt();
 
 static int TestEncryptDecrypt()
@@ -72,8 +81,11 @@ static int TestEncryptDecrypt()
  */
 int main(void)
 {
-  /* Reset of all peripherals, Initializes the Systick */
-  HAL_Init();
+  /* Configure system clock */
+  APP_SystemClockConfig();
+
+  /* Initialize GPIO */
+  APP_GpioConfig();
 
   int ret = TestEncryptDecrypt();
   if (ret != 0) {
@@ -81,11 +93,58 @@ int main(void)
   }
 
   while (1) {
-    BSP_LED_On(LED_GREEN);
-    HAL_Delay(1000);
-    BSP_LED_Off(LED_GREEN);
-    HAL_Delay(1000);
+    /* LED blinking */
+    LL_mDelay(1000);
+    LL_GPIO_TogglePin(LED_GPIO_PORT, LED_GPIO_PIN);
   }
+}
+
+/**
+ * @brief  Configure system clock
+ * @param  None
+ * @retval None
+ */
+static void APP_SystemClockConfig(void)
+{
+  /* Enable HSI */
+  LL_RCC_HSI_Enable();
+  while (LL_RCC_HSI_IsReady() != 1) {
+  }
+
+  /* Set AHB prescaler*/
+  LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
+
+  /* Configure HSISYS as system clock source */
+  LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_HSISYS);
+  while (LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_HSISYS) {
+  }
+
+  /* Set APB1 prescaler*/
+  LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_1);
+  LL_Init1msTick(8000000);
+
+  /* Update system clock global variable SystemCoreClock (can also be updated by calling SystemCoreClockUpdate function) */
+  LL_SetSystemCoreClock(8000000);
+}
+
+/**
+ * @brief  GPIO configuration function
+ * @param  None
+ * @retval None
+ */
+static void APP_GpioConfig(void)
+{
+  /* Enable clock */
+  LED_GPIO_CLK_ENABLE();
+
+  /* Configure LED pin as output */
+  LL_GPIO_SetPinMode(LED_GPIO_PORT, LED_GPIO_PIN, LL_GPIO_MODE_OUTPUT);
+  /* Default (after reset) is push-pull output */
+  /* LL_GPIO_SetPinOutputType(LED_GPIO_PORT, LED_GPIO_PIN, LL_GPIO_OUTPUT_PUSHPULL); */
+  /* Default (after reset) is very low output speed */
+  /* LL_GPIO_SetPinSpeed(LED_GPIO_PORT, LED_GPIO_PIN, LL_GPIO_SPEED_FREQ_LOW); */
+  /* Default (after reset) is no pull-up or pull-down */
+  /* LL_GPIO_SetPinPull(LED_GPIO_PORT, LED_GPIO_PIN, LL_GPIO_PULL_NO); */
 }
 
 /**
